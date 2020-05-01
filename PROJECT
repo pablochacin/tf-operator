@@ -1,0 +1,7 @@
+domain: tf-operator.io
+repo: github.com/pablochacin/tf-operator
+resources:
+- group: tf
+  kind: Stack
+  version: v1alpha1
+version: "2"
