@@ -91,4 +91,21 @@ var _ = Describe("Command Runner", func() {
             Expect(result.ExitCode).To(Equal(1))
         })
      })
+
+    Context("Changes the working dir", func(){
+        BeforeEach(func(){
+            env := &CmdEnvironment{WorkDir: "/tmp"}
+            result, err = env.Run("pwd")
+        })
+
+        It("Should not fail", func(){
+            Expect(err).To(BeNil())
+            Expect(result).NotTo(BeNil())
+        })
+
+        It("Should run in working directory", func() {
+            Expect(result.Output).To(Equal("/tmp\n"))
+        })
+ 
+    })
  })
