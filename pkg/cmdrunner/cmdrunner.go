@@ -1,6 +1,7 @@
 package cmdrunner
 
 import (
+    "errors"
     "fmt"
 	"os"
 	"os/exec"
@@ -42,7 +43,9 @@ func (e *CmdEnvironment)Run(shellCmd string, args ...string) (*CmdResult, error)
 
     output, err := cmd.CombinedOutput()
 	if err != nil {
-		return nil, err
+        if errors.Is(err, &exec.ExitError{}) {
+		    return nil, err
+        }
 	}
 
 	result := &CmdResult{

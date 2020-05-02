@@ -76,4 +76,19 @@ var _ = Describe("Command Runner", func() {
         })
     })
 
-})
+    Context("Capture return code", func(){
+        BeforeEach(func(){
+            env := &CmdEnvironment{}
+            result, err = env.Run("/bin/false")
+        })
+
+        It("Should not fail", func(){
+            Expect(err).To(BeNil())
+            Expect(result).NotTo(BeNil())
+        })
+
+        It("Should return exit code", func() {
+            Expect(result.ExitCode).To(Equal(1))
+        })
+     })
+ })
