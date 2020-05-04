@@ -54,7 +54,7 @@ func (w *TfWorkspace)Init() error {
 // Apply applies terraform plan
 func (w *TfWorkspace) Apply() error {
 	args := []string{"apply",
-		" -input=false",
+		"-input=false",
 		"-auto-aprove",
 		"-var-file", w.tfvars,
 		"-state", w.tfstate,

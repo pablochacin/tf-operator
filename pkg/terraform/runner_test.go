@@ -98,5 +98,22 @@ var _ = Describe("Terraform Runner", func() {
 			Expect(mockRunner.args).To(ContainElement("apply"))
 		})
 
+		It("Should use auto-aprove option", func() {
+			Expect(mockRunner.args).To(ContainElement("-auto-aprove"))
+		})
+
+		It("Should prevent variable inputs", func() {
+			Expect(mockRunner.args).To(ContainElement("-input=false"))
+		})
+
+		It("Should set the state source and destination", func() {
+			Expect(mockRunner.args).To(ContainElement("-state"))
+			Expect(mockRunner.args).To(ContainElement("-state-out"))
+		})
+
+		It("Should set the var file", func() {
+			Expect(mockRunner.args).To(ContainElement("-var-file"))
+		})
+
 	})
 })
