@@ -50,32 +50,26 @@ var _ = Describe("Apply Job Builder", func() {
 		BeforeEach(func() {
 			applyJob, err = BuildJob(cfg)
 			spec = applyJob.Spec.Template.Spec
+
+            // It should have not failed
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(applyJob).ToNot(BeNil())
+
+            // It should have one container
+		    Expect(spec.Containers).To(HaveLen(1))
+
 			container = spec.Containers[0]
 		})
 
-		It("Should not fail", func() {
-			Expect(err).ShouldNot(HaveOccurred())
-			Expect(applyJob).ToNot(BeNil())
-		})
-
-		//
-		//                It("Should have one container", func() {
-		//                    Expect(spec.Containers).To(HaveLen(1))
-		//                })
-		//
-
 		It("Should have the apply command set", func() {
-			//FIXME: which container is the command container shouldn't be exposed to the test
 			Expect(container.Command).Should(ContainElements(cfg.Command))
 		})
 
 		It("Should have the arguments set", func() {
-			//FIXME: Job builds could add additional arguments. We should not test for equal here
 			Expect(container.Args).Should(ContainElements(cfg.Args))
 		})
 
 		It("Should have volume mounts with secrets and configmap", func() {
-
 			// check secreats and ConfigMaps are mounted in container
 			sourceNames := []string{cfg.TfConfig, cfg.Tfvars, cfg.Tfstate}
 			Expect(getVolumeSources(spec.Volumes)).To(ContainElements(sourceNames))
