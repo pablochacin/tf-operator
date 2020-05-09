@@ -22,11 +22,13 @@ import (
 )
 
 type createOpts struct {
+    kubeconfig  string
     stack       string
-    namespace  string
+    namespace   string
     configDir   string
     configMap   string
     tfvars      string
+    tfstate     string
 }
 
 var(
@@ -40,7 +42,12 @@ var(
 	    Short:      "Create a terraform operator stack",
 	    Long:       `Create a terraform operator stack from a terrafrom configuration
 and a tfvars file. The terraform configuration can be obtained from a local
-directory or a secret`,
+directory or a config map. If a tfstate is provided, it will be use to initilize
+the state of the stack`,
+        Example: `
+# Create stack from working directory. All .tf files will be used as config
+# and the terraform.tfvars file will be used to provider the input variables
+tfoctl -s MyStack`,
         PreRunE:    validateArgs,
         Run:        run,
    }
@@ -50,11 +57,13 @@ directory or a secret`,
 func init() {
 	rootCmd.AddCommand(createCmd)
 
+	createCmd.Flags().StringVarP(&opts.kubeconfig, "kubeconfig", "k", "", "path to kubeconfig for cluster. If not specified, default discovery rules will apply")
 	createCmd.Flags().StringVarP(&opts.stack, "stack", "s", "", "stack name")
-	createCmd.Flags().StringVarP(&opts.namespace, "namespace", "n", "default", "namespace")
-    createCmd.Flags().StringVarP(&opts.configDir, "config","c", "./", "terraform configuration dir")
-    createCmd.Flags().StringVarP(&opts.configMap, "map", "m", "", "terraform configuration map")
-    createCmd.Flags().StringVarP(&opts.tfvars, "vars", "v", "./terraform.vars","terraform vars")
+	createCmd.Flags().StringVarP(&opts.namespace, "namespace", "n", "default", "namespace for stack")
+    createCmd.Flags().StringVarP(&opts.configDir, "config", "c", "./", "path to the terraform configuration directory. All .tf files will be used as the stack configuration. Default is current directory")
+    createCmd.Flags().StringVarP(&opts.configMap, "map", "m", "", "terraform configuration map. Name of config map (in the stack namespace) that holds the terraform configuraion.")
+    createCmd.Flags().StringVarP(&opts.tfvars, "vars", "v", "./terraform.vars","Path toterraform vars file.")
+    createCmd.Flags().StringVarP(&opts.tfstate, "state", "t", "./tfstate","terraform state")
 }
 
 // validateArgs validates the arguments
@@ -77,9 +86,10 @@ func validateArgs(cmd *cobra.Command, args []string) error {
 
 // run executes the create stack command
 func run(cmd *cobra.Command, args []string) {
-	fmt.Printf("create stack %s in namepace %s from config in %s with vars in %s",
+	fmt.Printf("create stack %s in namepace %s from config in %s with vars in %s and state %s",
                opts.stack,
                opts.namespace,
                opts.configDir,
-               opts.tfvars)
+               opts.tfvars,
+               opts.tfstate)
 }
