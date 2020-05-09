@@ -16,12 +16,22 @@ limitations under the License.
 package main
 
 import (
-	"os"
+	"github.com/spf13/cobra"
 )
 
-func main() {
-	rootCmd := newRootCmd()
-	if err := rootCmd.Execute(); err != nil {
-		os.Exit(1)
+func newRootCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "tfoctl",
+		Short: "Manage Terraform Operator Stacks",
+		Long: `Create, update and inspect infrastructure defined as Terraform
+Operator Stacks.`,
 	}
+
+	// register subcommands
+	cmd.AddCommand(
+		newCreateCmd(),
+	)
+
+	return cmd
+
 }

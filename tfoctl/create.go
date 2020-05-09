@@ -13,29 +13,31 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package cmd
+package main
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
-	"os"
+
 )
 
-
-// rootCmd represents the base command when called without any subcommands
-var rootCmd = &cobra.Command{
-	Use:   "tfoctl",
-	Short: "Manage Terraform Operator Stacks",
-	Long: `Create, update and inspect infrastructure defined as Terraform
-Operator Stacks.`,
+type createOpts struct {
+	kubeconfig string
+	stack      string
+	namespace  string
+	configDir  string
+	configMap  string
+	tfvars     string
+	tfstate    string
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-func Execute() {
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+// run executes the create stack command
+func (opts *createOpts) run() error {
+	fmt.Printf("create stack %s in namepace %s from config in %s with vars in %s and state %s",
+		opts.stack,
+		opts.namespace,
+		opts.configDir,
+		opts.tfvars,
+		opts.tfstate)
+
+	return nil
 }
-
-
