@@ -53,8 +53,8 @@ tfoctl -s MyStack`,
 	cmd.Flags().StringVarP(&opts.namespace, "namespace", "n", "default", "namespace for stack")
 	cmd.Flags().StringVarP(&opts.configDir, "config", "c", "./", "path to the terraform configuration directory. All .tf files will be used as the stack configuration. Default is current directory")
 	cmd.Flags().StringVarP(&opts.configMap, "map", "m", "", "terraform configuration map. Name of config map (in the stack namespace) that holds the terraform configuraion.")
-	cmd.Flags().StringVarP(&opts.tfvars, "vars", "v", "./terraform.vars", "Path toterraform vars file.")
-	cmd.Flags().StringVarP(&opts.tfstate, "state", "t", "./tfstate", "terraform state")
+	cmd.Flags().StringVarP(&opts.tfvars, "vars", "v", "terraform.tfvars", "Path toterraform vars file.")
+	cmd.Flags().StringVarP(&opts.tfstate, "state", "t", "", "terraform state")
 
 	return cmd
 }
