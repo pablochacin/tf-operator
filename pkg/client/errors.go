@@ -8,8 +8,11 @@ import (
 type ErrorReason string
 
 const (
-	// The object references in an operation doesn't exists
+	// The object referenced in an operation doesn't exists
 	ErrorReasonNotFound ErrorReason = "Not Found"
+
+    // The object referenced in an operation already exists 
+    ErrorReasonAlreadyExists ErrorReason = "Already Exists"
 )
 
 // TFOError extends error with a ErrorReason
@@ -32,11 +35,17 @@ func NewNotFoundError(name string, class string, ns string) error {
 	return NewTFOError(msg, ErrorReasonNotFound)
 }
 
-// IsNotFoundError indicates if the error is a not found error
-func IsNotFoundError(err error) bool {
+// NewAlreadyExistsError returns an error with AlreadyExists cause
+func NewAlreadyExistsError(name string, class string, ns string) error {
+	msg := fmt.Sprintf(" <%s> '%s' already exists in <amespace> '%s'", class, name, ns)
+	return NewTFOError(msg, ErrorReasonAlreadyExists)
+}
+
+// IsNotFoundError indicates if the error has the given cause
+func Is(err error, reason ErrorReason) bool {
 	var ftoErr TFOError
 	if errors.As(err, &ftoErr) {
-		return ftoErr.Reason == ErrorReasonNotFound
+		return ftoErr.Reason == reason
 	}
 	return false
 }
