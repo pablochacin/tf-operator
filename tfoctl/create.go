@@ -16,28 +16,20 @@ limitations under the License.
 package main
 
 import (
-	"fmt"
-
+	"github.com/pablochacin/tf-operator/pkg/client"
 )
 
 type createOpts struct {
-	kubeconfig string
-	stack      string
-	namespace  string
-	configDir  string
-	configMap  string
-	tfvars     string
-	tfstate    string
+	client    client.Client
+	stack     string
+	namespace string
+	configDir string
+	configMap string
+	tfvars    string
+	tfstate   string
 }
 
 // run executes the create stack command
 func (opts *createOpts) run() error {
-	fmt.Printf("create stack %s in namepace %s from config in %s with vars in %s and state %s",
-		opts.stack,
-		opts.namespace,
-		opts.configDir,
-		opts.tfvars,
-		opts.tfstate)
-
 	return nil
 }

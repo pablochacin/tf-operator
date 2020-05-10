@@ -18,6 +18,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/pablochacin/tf-operator/pkg/client"
 	"github.com/spf13/cobra"
 )
 
@@ -26,6 +27,8 @@ var (
 )
 
 func newCreateCmd() *cobra.Command {
+
+	var kubeconfig string
 
 	opts := &createOpts{}
 
@@ -44,11 +47,16 @@ tfoctl -s MyStack`,
 			return opts.validateArgs(cmd)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			client, err := client.NewClient(kubeconfig)
+			if err != nil {
+				return err
+			}
+			opts.client = client
 			return opts.run()
 		},
 	}
 
-	cmd.Flags().StringVarP(&opts.kubeconfig, "kubeconfig", "k", "", "path to kubeconfig for cluster. If not specified, default discovery rules will apply")
+	cmd.Flags().StringVarP(&kubeconfig, "kubeconfig", "k", "", "path to kubeconfig for cluster. If not specified, default discovery rules will apply")
 	cmd.Flags().StringVarP(&opts.stack, "stack", "s", "", "stack name")
 	cmd.Flags().StringVarP(&opts.namespace, "namespace", "n", "default", "namespace for stack")
 	cmd.Flags().StringVarP(&opts.configDir, "config", "c", "./", "path to the terraform configuration directory. All .tf files will be used as the stack configuration. Default is current directory")
