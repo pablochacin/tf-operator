@@ -17,6 +17,7 @@ package main
 
 import (
 	"github.com/pablochacin/tf-operator/pkg/client"
+	"github.com/pkg/errors"
 )
 
 type createOpts struct {
@@ -30,6 +31,12 @@ type createOpts struct {
 }
 
 // run executes the create stack command
-func (opts *createOpts) run() error {
+func (o *createOpts) run() error {
+
+	_, err := o.client.GetStack(o.stack, o.namespace)
+	if err == nil {
+		return errors.Errorf("stack %s already exists", o.stack)
+	}
+
 	return nil
 }
