@@ -24,17 +24,17 @@ import (
 // StackSpec defines the desired state of Stack
 type StackSpec struct {
 	// Reference to the config map with the configuration file(s)
-	TfConfig corev1.ObjectReference `json:"tfconfig"`
+	TfConfig corev1.LocalObjectReference `json:"tfconfig"`
 
 	// Reference to secrect with tfvars
-	TfVars corev1.ObjectReference `json:"tfvars"`
+	TfVars corev1.LocalObjectReference `json:"tfvars"`
 }
 
 // StackStatus defines the observed state of Stack
 type StackStatus struct {
 
 	// Reference to secrect with tf state
-	TfState corev1.ObjectReference `json:"tfstate"`
+	TfState corev1.LocalObjectReference `json:"tfstate"`
 
 	// base64 encoded tfout
 	TfOutput string `json:"tfout"`
