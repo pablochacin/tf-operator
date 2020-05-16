@@ -47,7 +47,7 @@ tfoctl -s MyStack`,
 			return opts.validateArgs(cmd)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			client, err := client.NewClient(kubeconfig)
+			client, err := client.NewFromKubeconfig(kubeconfig)
 			if err != nil {
 				return err
 			}

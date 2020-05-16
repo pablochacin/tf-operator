@@ -33,6 +33,11 @@ func (c *fakeClient) GetStack(stackName string, namespace string) (*tfo.Stack, e
 	return c.stack, nil
 }
 
+
+func (c *fakeClient) CreateStack(stackName string, namespace string, tfconf string, tfvars string) (*tfo.Stack, error) {
+    return nil, nil
+}
+
 // withError sets the error to return on
 func (c *fakeClient) withError(err error) {
 	c.err = err
