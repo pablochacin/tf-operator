@@ -9,6 +9,7 @@ import (
 
 	tfo "github.com/pablochacin/tf-operator/api/v1alpha1"
     corev1 "k8s.io/api/core/v1"
+    metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
     apierr "k8s.io/apimachinery/pkg/api/errors"
     runtime "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -57,22 +58,58 @@ func (c *client)CreateStack(name string, namespace string, tfconf string, tfvars
     }
 
     // create configmap for config
-    _, err = createConfigMap(name+"-"+tfconf,namespace, tfconf)
+    tfconfMap, err := createConfigMap(name+"-tfconf",namespace, tfconf)
+    if err != nil {
+        return  nil, err
+    }
+    err = c.rc.Create(context.TODO(), tfconfMap)
     if err != nil {
         return  nil, err
     }
 
     // create secret for tfvars
-    _, err = createSecret(name+"-tfvars", namespace, tfvars)
+    tfvarsSecret, err := createSecret(name+"-tfvars", namespace, tfvars)
+    if err != nil {
+        return  nil, err
+    }
+    err = c.rc.Create(context.TODO(), tfvarsSecret)
     if err != nil {
         return  nil, err
     }
 
-    return nil, nil
+
+    //create Stack
+    stack := &tfo.Stack{
+        ObjectMeta: metav1.ObjectMeta{
+            Name: name,
+            Namespace: namespace,
+        },
+        Spec: tfo.StackSpec{
+            TfConfig: corev1.LocalObjectReference{Name: tfconfMap.Name},
+            TfVars:   corev1.LocalObjectReference{Name: tfvarsSecret.Name},
+        },
+    }
+
+    err = c.rc.Create(context.TODO(), stack)
+    if err != nil {
+        return  nil, err
+    }
+
+    return stack, nil
+
 }
 
 // createConfigMap create a ConfigMap from a the files in a directory
 func createConfigMap(name string, namespace string, dirPath string) (*corev1.ConfigMap, error) {
+
+    configMap := &corev1.ConfigMap{
+        ObjectMeta: metav1.ObjectMeta{
+            Name: name,
+            Namespace: namespace,
+        },
+        Data: map[string]string{},
+    }
+
     fileList, err := ioutil.ReadDir(dirPath)
     if err != nil {
         desc := fmt.Sprintf("error accessing directory %s: %v", dirPath, err)
@@ -90,13 +127,28 @@ func createConfigMap(name string, namespace string, dirPath string) (*corev1.Con
             desc := fmt.Sprintf("file %s is empty", filePath)
             return nil, NewTFOError(desc, ErrorReasonInvalidFileContent)
         }
+        data, err := ioutil.ReadFile(filePath)
+        if err != nil {
+            desc := fmt.Sprintf("error reading file %s: %v", filePath, err)
+            return nil, NewTFOError(desc, ErrorReasonFileCanNotBeAccessed)
+        }
+        configMap.Data[file.Name()] = string(data)
+
     }
 
-    return nil, nil
+    return configMap, nil
 }
 
 // createSecret create a Secret from a file
 func createSecret(name string, namespace string, filePath string) (*corev1.Secret, error) {
+    secret := &corev1.Secret{
+        ObjectMeta: metav1.ObjectMeta{
+            Name: name,
+            Namespace: namespace,
+        },
+        Data: map[string][]byte{},
+    }
+
     fileInfo, err := os.Stat(filePath)
     if err != nil {
         desc := fmt.Sprintf("error accessing file %s: %v", filePath, err)
@@ -108,5 +160,12 @@ func createSecret(name string, namespace string, filePath string) (*corev1.Secre
         return nil, NewTFOError(desc, ErrorReasonInvalidFileContent)
     }
 
-    return nil, nil
+    data, err := ioutil.ReadFile(filePath)
+    if err != nil {
+        desc := fmt.Sprintf("error reading file %s: %v", filePath, err)
+        return nil, NewTFOError(desc, ErrorReasonFileCanNotBeAccessed)
+    }
+    secret.Data[fileInfo.Name()] = data
+
+    return secret, nil
 }

@@ -1,6 +1,7 @@
 package client
 
 import (
+    "context"
     "io/ioutil"
     "os"
     "path/filepath"
@@ -11,6 +12,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	tfo "github.com/pablochacin/tf-operator/api/v1alpha1"
+    corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
     rmt "k8s.io/apimachinery/pkg/runtime"
     ctl "sigs.k8s.io/controller-runtime/pkg/client"
@@ -50,6 +52,7 @@ func TestCreate(t *testing.T) {
 // optional list of initial objects
 func newFakeClient(objs...rmt.Object) ctl.Client {
     sch := rmt.NewScheme()
+    corev1.AddToScheme(sch)
     tfo.AddToScheme(sch)
     rc := fake.NewFakeClientWithScheme(sch, objs...)
     return rc
@@ -127,6 +130,51 @@ var _ = Describe("Client", func() {
                 Expect(err).To(HaveOccurred())
                 Expect(Is(err,ErrorReasonAlreadyExists)).To(BeTrue())
                 Expect(stack).To(BeNil())
+            })
+        })
+
+        Context("New CRD is created", func() {
+            BeforeEach(func(){
+               tfFiles = map[string]string{
+                   "terraform.tfvars": terraform_tfvars,
+                   "tfconfig/main.tf": main_tf,
+               }
+            })
+
+            It("Should not fail", func() {
+               Expect(err).NotTo(HaveOccurred())
+               Expect(stack).NotTo(BeNil())
+            })
+
+            It("Should create Stack", func(){
+                getErr := rc.Get(
+                    context.TODO(),
+                    ctl.ObjectKey{Name: stackName, Namespace: namespace},
+                    &tfo.Stack{},
+                )
+                Expect(getErr).NotTo(HaveOccurred())
+            })
+
+            It("Should create Config Map", func(){
+                cfgMap := corev1.ConfigMap{}
+                getErr := rc.Get(
+                    context.TODO(),
+                    ctl.ObjectKey{Name: stackName+"-tfconf", Namespace: namespace},
+                    &cfgMap,
+                )
+                Expect(getErr).NotTo(HaveOccurred())
+                Expect(cfgMap.Data["main.tf"]).To(Equal(main_tf))
+            })
+
+            It("Should create Secret", func(){
+                secret := corev1.Secret{}
+                getErr := rc.Get(
+                    context.TODO(),
+                    ctl.ObjectKey{Name: stackName+"-tfvars", Namespace: namespace},
+                    &secret,
+                )
+                Expect(getErr).NotTo(HaveOccurred())
+                Expect(secret.Data["terraform.tfvars"]).To(Equal([]byte(terraform_tfvars)))
             })
         })
 
@@ -211,7 +259,6 @@ var _ = Describe("Client", func() {
         })
 
         Context("TF file content is invalid", func() {
-
            Context("tfvars file is empty", func(){
                 BeforeEach(func(){
                     // create tfconf but not tfvars
@@ -243,6 +290,7 @@ var _ = Describe("Client", func() {
                     Expect(stack).To(BeNil())
                 })
            })
-       })
+        })
+
     })
 })
