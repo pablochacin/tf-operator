@@ -5,6 +5,7 @@ import (
     "fmt"
     "io/ioutil"
     "os"
+    "path"
 
 	tfo "github.com/pablochacin/tf-operator/api/v1alpha1"
     corev1 "k8s.io/api/core/v1"
@@ -83,15 +84,28 @@ func createConfigMap(name string, namespace string, dirPath string) (*corev1.Con
         return nil, NewTFOError(desc, ErrorReasonFileCanNotBeAccessed)
     }
 
+    for _, file := range fileList {
+        filePath := path.Join(dirPath, file.Name())
+        if file.Size() == 0 {
+            desc := fmt.Sprintf("file %s is empty", filePath)
+            return nil, NewTFOError(desc, ErrorReasonInvalidFileContent)
+        }
+    }
+
     return nil, nil
 }
 
 // createSecret create a Secret from a file
 func createSecret(name string, namespace string, filePath string) (*corev1.Secret, error) {
-    _, err := os.Stat(filePath)
+    fileInfo, err := os.Stat(filePath)
     if err != nil {
         desc := fmt.Sprintf("error accessing file %s: %v", filePath, err)
         return nil, NewTFOError(desc, ErrorReasonFileCanNotBeAccessed)
+    }
+
+    if fileInfo.Size() == 0 {
+        desc := fmt.Sprintf("file %s is empty", filePath)
+        return nil, NewTFOError(desc, ErrorReasonInvalidFileContent)
     }
 
     return nil, nil
