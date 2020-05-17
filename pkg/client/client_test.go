@@ -89,20 +89,38 @@ var _ = Describe("Client", func() {
 		err         error
         rc          ctl.Client
         tfDir       string
+        tfFiles  = map[string]string{}
+        initObjs = []rmt.Object{}
     )
 
     Context("Create Stack", func(){
+
+        JustBeforeEach(func() {
+            rc = newFakeClient(initObjs...)
+            c, _ := NewFromRuntimeClient(rc)
+            tfDir, err =  createTfWorkDir(tfFiles)
+            tfvars := filepath.Join(tfDir,  "terraform.tfvars")
+            tfconf := filepath.Join(tfDir, "tfconfig")
+            stack, err = c.CreateStack(stackName, namespace, tfconf, tfvars)
+        })
+
+        AfterEach(func(){
+            os.RemoveAll(tfDir)
+            // reset global variables not set in all tests
+            tfFiles  = map[string]string{}
+            initObjs = []rmt.Object{}
+         })
+
         Context("stack already exists", func() {
             BeforeEach(func() {
-                rc = newFakeClient(
+                initObjs = append(
+                    initObjs,
                     &tfo.Stack{
                         ObjectMeta: metav1.ObjectMeta{
                             Name: stackName,
                             Namespace: namespace,
                         },
-                })
-                c, _ := NewFromRuntimeClient(rc)
-                stack, err = c.CreateStack(stackName, namespace,"","")
+                    })
             })
 
             It("Should Return an error", func() {
@@ -113,21 +131,6 @@ var _ = Describe("Client", func() {
         })
 
         Context("tf files cannot be accessed", func() {
-            var tfFiles map[string]string
-
-            JustBeforeEach(func() {
-                rc = newFakeClient()
-                c, _ := NewFromRuntimeClient(rc)
-                tfDir, err =  createTfWorkDir(tfFiles)
-                tfvars := filepath.Join(tfDir,  "terraform.tfvars")
-                tfconf := filepath.Join(tfDir, "tfconfig")
-                stack, err = c.CreateStack(stackName, namespace, tfconf, tfvars)
-            })
-
-            AfterEach(func(){
-                os.RemoveAll(tfDir)
-            })
-
             Context("Config directory doesn't exists", func(){
                 BeforeEach(func(){
                     // create tfvars but not tfconfig
@@ -206,5 +209,40 @@ var _ = Describe("Client", func() {
                 })
            })
         })
+
+        Context("TF file content is invalid", func() {
+
+           Context("tfvars file is empty", func(){
+                BeforeEach(func(){
+                    // create tfconf but not tfvars
+                    tfFiles = map[string]string{
+                        "terraform.tfvars": "",
+                        "tfconfig/main.tf": main_tf,
+                    }
+                })
+
+                It("Should Return an error", func() {
+                    Expect(err).To(HaveOccurred())
+                    Expect(Is(err,ErrorReasonInvalidFileContent)).To(BeTrue())
+                    Expect(stack).To(BeNil())
+                })
+           })
+
+           Context("tfconfig file is empty", func(){
+                BeforeEach(func(){
+                    // create tfconf but not tfvars
+                    tfFiles = map[string]string{
+                        "terraform.tfvars": terraform_tfvars,
+                        "tfconfig/main.tf": "",
+                    }
+                })
+
+                It("Should Return an error", func() {
+                    Expect(err).To(HaveOccurred())
+                    Expect(Is(err,ErrorReasonInvalidFileContent)).To(BeTrue())
+                    Expect(stack).To(BeNil())
+                })
+           })
+       })
     })
 })
