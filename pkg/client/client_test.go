@@ -147,12 +147,15 @@ var _ = Describe("Client", func() {
             })
 
             It("Should create Stack", func(){
+                stck := tfo.Stack{}
                 getErr := rc.Get(
                     context.TODO(),
                     ctl.ObjectKey{Name: stackName, Namespace: namespace},
-                    &tfo.Stack{},
+                    &stck,
                 )
                 Expect(getErr).NotTo(HaveOccurred())
+                Expect(stck.Spec.TfConfig.Name).To(Equal(stackName+"-tfconf"))
+                Expect(stck.Spec.TfVars.Name).To(Equal(stackName+"-tfvars"))
             })
 
             It("Should create Config Map", func(){
