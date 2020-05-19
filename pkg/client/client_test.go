@@ -224,7 +224,9 @@ var _ = Describe("Client", func() {
                     Expect(stack).To(BeNil())
                 })
            })
+        })
 
+        Context("TF files content is invalid", func() {
            Context("tfvars file is empty", func(){
                 BeforeEach(func(){
                     // create tfconf but not tfvars
@@ -257,40 +259,5 @@ var _ = Describe("Client", func() {
                 })
            })
         })
-
-        Context("TF file content is invalid", func() {
-           Context("tfvars file is empty", func(){
-                BeforeEach(func(){
-                    // create tfconf but not tfvars
-                    tfFiles = map[string]string{
-                        "terraform.tfvars": "",
-                        "tfconfig/main.tf": main_tf,
-                    }
-                })
-
-                It("Should Return an error", func() {
-                    Expect(err).To(HaveOccurred())
-                    Expect(Is(err,ErrorReasonInvalidFileContent)).To(BeTrue())
-                    Expect(stack).To(BeNil())
-                })
-           })
-
-           Context("tfconfig file is empty", func(){
-                BeforeEach(func(){
-                    // create tfconf but not tfvars
-                    tfFiles = map[string]string{
-                        "terraform.tfvars": terraform_tfvars,
-                        "tfconfig/main.tf": "",
-                    }
-                })
-
-                It("Should Return an error", func() {
-                    Expect(err).To(HaveOccurred())
-                    Expect(Is(err,ErrorReasonInvalidFileContent)).To(BeTrue())
-                    Expect(stack).To(BeNil())
-                })
-           })
-        })
-
     })
 })
