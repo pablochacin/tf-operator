@@ -19,6 +19,10 @@ const (
 
     // The File has an invalid content (it is empty, invalid content type)
     ErrorReasonInvalidFileContent ErrorReason = "File content is not valid"
+
+    // Error accessing the kubernetes runtime
+    ErrorReasonRuntimeError ErrorReason = "Runtime error"
+
 )
 
 // TFOError extends error with a ErrorReason

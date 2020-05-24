@@ -52,9 +52,15 @@ func (c *client)CreateStack(name string, namespace string, tfconf string, tfvars
         runtime.ObjectKey{Name: name, Namespace: namespace},
         &tfo.Stack{},
     )
-    if !apierr.IsNotFound(err) {
+    if err == nil {
         errDesc := fmt.Sprintf("stack %s already exists in namespace %s", name, namespace)
         return nil, NewTFOError(errDesc, ErrorReasonAlreadyExists)
+    }
+
+    // ignore not found error, as it is expected
+    if !apierr.IsNotFound(err) {
+        errDesc := fmt.Sprintf("runtime error creating stack: %s", err)
+        return nil, NewTFOError(errDesc, ErrorReasonRuntimeError)
     }
 
     // create configmap for config
