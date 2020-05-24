@@ -11,7 +11,9 @@ import (
     corev1 "k8s.io/api/core/v1"
     metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
     apierr "k8s.io/apimachinery/pkg/api/errors"
-    runtime "sigs.k8s.io/controller-runtime/pkg/client"
+    apirtm "k8s.io/apimachinery/pkg/runtime"
+    "k8s.io/client-go/tools/clientcmd"
+    ctlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // Client exposes a high-level interface for tf-operator actions
@@ -25,7 +27,7 @@ type Client interface {
 
 // tfoClient Client implementation
 type client struct {
-    rc runtime.Client
+    rc ctlclient.Client
 }
 
 // GetStack returns an existing stack or an error
@@ -35,11 +37,27 @@ func (c *client)GetStack(stackName string, namespace string) (*tfo.Stack, error)
 
 // NewClientFromKubeconfig creates a Client from a kubeconfig
 func NewFromKubeconfig(kubeconfig string) (Client, error) {
-	return &client{}, nil
+	sch := apirtm.NewScheme()
+	corev1.AddToScheme(sch)
+	tfo.AddToScheme(sch)
+	cfg, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+	if err != nil {
+		return nil, err
+	}
+
+	kubeClient, err := ctlclient.New(
+		cfg,
+		ctlclient.Options{Scheme: sch},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &client{rc: kubeClient}, nil
 }
 
 // NewClientFromRuntimeClient create a Client from a runtime client
-func NewFromRuntimeClient(rc runtime.Client) (Client, error) {
+func NewFromRuntimeClient(rc ctlclient.Client) (Client, error) {
     return &client{rc: rc}, nil
 }
 
@@ -49,7 +67,7 @@ func (c *client)CreateStack(name string, namespace string, tfconf string, tfvars
     // check stack doesn't exits
     err :=  c.rc.Get(
         context.TODO(),
-        runtime.ObjectKey{Name: name, Namespace: namespace},
+        ctlclient.ObjectKey{Name: name, Namespace: namespace},
         &tfo.Stack{},
     )
     if err == nil {
