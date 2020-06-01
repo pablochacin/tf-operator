@@ -24,9 +24,7 @@ type createOpts struct {
 	stack     string
 	namespace string
 	configDir string
-	configMap string
 	tfvars    string
-	tfstate   string
 }
 
 // run executes the create stack command

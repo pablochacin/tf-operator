@@ -48,8 +48,6 @@ var _ = Describe("run create command", func() {
 			defaults := map[string]string{
 				"config":    "./",
 				"namespace": "default",
-				"map":       "",
-				"state":     "",
 				"vars":      "terraform.tfvars",
 			}
 			for flagName, value := range defaults {
@@ -83,15 +81,5 @@ var _ = Describe("run create command", func() {
 			})
 		})
 
-		Context("Created with conflicting parameters", func() {
-			BeforeEach(func() {
-				cmd.SetArgs([]string{"-s", "my stack", "-m", "mymap", "-c", "myConfDir"})
-				err = cmd.Execute()
-			})
-
-			It("Should fail", func() {
-				Expect(err).To(HaveOccurred())
-			})
-		})
 	})
 })

@@ -36,9 +36,8 @@ func newCreateCmd() *cobra.Command {
 		Use:   "create",
 		Short: "Create a terraform operator stack",
 		Long: `Create a terraform operator stack from a terrafrom configuration
-and a tfvars file. The terraform configuration can be obtained from a local
-directory or a config map. If a tfstate is provided, it will be use to initilize
-the state of the stack`,
+and a tfvars file. The terraform configuration is obtained from a local
+directory.`,
 		Example: `
 # Create stack from working directory. All .tf files will be used as config
 # and the terraform.tfvars file will be used to provider the input variables
@@ -60,9 +59,7 @@ tfoctl -s MyStack`,
 	cmd.Flags().StringVarP(&opts.stack, "stack", "s", "", "stack name")
 	cmd.Flags().StringVarP(&opts.namespace, "namespace", "n", "default", "namespace for stack")
 	cmd.Flags().StringVarP(&opts.configDir, "config", "c", "./", "path to the terraform configuration directory. All .tf files will be used as the stack configuration. Default is current directory")
-	cmd.Flags().StringVarP(&opts.configMap, "map", "m", "", "terraform configuration map. Name of config map (in the stack namespace) that holds the terraform configuraion.")
 	cmd.Flags().StringVarP(&opts.tfvars, "vars", "v", "terraform.tfvars", "Path toterraform vars file.")
-	cmd.Flags().StringVarP(&opts.tfstate, "state", "t", "", "terraform state")
 
 	return cmd
 }
@@ -74,11 +71,6 @@ func (opts *createOpts) validateArgs(cmd *cobra.Command) error {
 		if !cmd.Flags().Lookup(arg).Changed {
 			return fmt.Errorf("argument %s must be specified", arg)
 		}
-	}
-
-	// check for conflicting arguments
-	if cmd.Flags().Lookup("config").Changed && cmd.Flags().Lookup("map").Changed {
-		return fmt.Errorf("only 'config' or 'map' must be specified")
 	}
 
 	return nil
