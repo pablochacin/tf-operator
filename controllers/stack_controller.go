@@ -38,10 +38,15 @@ type StackReconciler struct {
 // +kubebuilder:rbac:groups=tf.tf-operator.io,resources=stacks/status,verbs=get;update;patch
 
 func (r *StackReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	_ = context.Background()
-	_ = r.Log.WithValues("stack", req.NamespacedName)
+	ctx := context.Background()
+	log := r.Log.WithValues("stack", req.NamespacedName)
 
-	// your logic here
+    var stack = tfv1alpha1.Stack{}
+    err := r.Get(ctx, req.NamespacedName, &stack)
+    if err != nil {
+        log.Error(err, "unable to fetch Stack")
+        return ctrl.Result{}, client.IgnoreNotFound(err)
+    }
 
 	return ctrl.Result{}, nil
 }
