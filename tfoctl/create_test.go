@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	tfo "github.com/pablochacin/tf-operator/api/v1alpha1"
+    "github.com/pablochacin/tf-operator/pkg/client"
 )
 
 func TestCreate(t *testing.T) {
@@ -35,7 +36,11 @@ func (c *fakeClient) GetStack(stackName string, namespace string) (*tfo.Stack, e
 
 
 func (c *fakeClient) CreateStack(stackName string, namespace string, tfconf string, tfvars string) (*tfo.Stack, error) {
-    return nil, nil
+	if c.err != nil {
+		return nil, c.err
+	}
+
+	return c.stack, nil
 }
 
 // withError sets the error to return on
@@ -57,7 +62,8 @@ var _ = Describe("create", func() {
 				namespace: "default",
 				// Return stack TODO: complete stack's fields
 				client: &fakeClient{
-					stack: &tfo.Stack{},
+					stack:  &tfo.Stack{},
+                    err:    client.NewTFOError("Stack alredy exists", client.ErrorReasonAlreadyExists),
 				},
 			}
 
@@ -69,3 +75,4 @@ var _ = Describe("create", func() {
 		})
 	})
 })
+
