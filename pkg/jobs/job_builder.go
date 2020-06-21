@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"math/rand"
+    "strings"
 	"time"
 
 	batchv1 "k8s.io/api/batch/v1"
@@ -11,7 +12,7 @@ import (
 
 const (
 	// CharSet defines the alphanumeric set for random string generation
-	charSet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+	charSet = "0123456789abcdefghijklmnopqrstuvwxyz"
 
 	// the image used in the Job for performing the copies
 	jobImage = "busybox:latest"
@@ -83,7 +84,9 @@ type JobConfig struct {
 func BuildJob(cfg *JobConfig) (*batchv1.Job, error) {
 	job := jobTemplate.DeepCopy()
 
-	job.Name = cfg.Stack + "-" + cfg.Command + "-" + randomString(6)
+	job.Name = strings.ToLower(cfg.Stack) +
+               "-" + strings.ToLower(cfg.Command) +
+               "-" + randomString(6)
 	job.Namespace = cfg.Namespace
 
 	jobPodSpec := &job.Spec.Template.Spec
@@ -100,17 +103,19 @@ func BuildJob(cfg *JobConfig) (*batchv1.Job, error) {
 		job.ObjectMeta.Labels[k] = v
 	}
 
-	err := volumeFromSecret(jobPodSpec, tfstateVolName, tfstatePath, cfg.Tfstate)
-	if err != nil {
-	}
-
-	err = volumeFromSecret(jobPodSpec, tfvarsVolName, tfvarsPath, cfg.Tfvars)
+	err := volumeFromSecret(jobPodSpec, tfvarsVolName, tfvarsPath, cfg.Tfvars)
 	if err != nil {
 	}
 
 	err = volumeFromConfigMap(jobPodSpec, tfconfigVolName, tfconfigPath, cfg.TfConfig)
 	if err != nil {
 	}
+
+    if cfg.Tfstate != "" {
+        err = volumeFromSecret(jobPodSpec, tfstateVolName, tfstatePath, cfg.Tfstate)
+	    if err != nil {
+	    }
+    }
 
 	return job, nil
 }

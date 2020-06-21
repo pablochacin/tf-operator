@@ -25,6 +25,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	tfv1alpha1 "github.com/pablochacin/tf-operator/api/v1alpha1"
+    "github.com/pablochacin/tf-operator/pkg/jobs"
 )
 
 // StackReconciler reconciles a Stack object
@@ -48,6 +49,13 @@ func (r *StackReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
         return ctrl.Result{}, client.IgnoreNotFound(err)
     }
 
+    // is stack been deleted?
+	if !stack.ObjectMeta.DeletionTimestamp.IsZero() {
+		return r.reconcileDelete(ctx, stack)
+	}
+
+    return r.reconcileUpdate(ctx, stack)
+
 	return ctrl.Result{}, nil
 }
 
@@ -55,4 +63,33 @@ func (r *StackReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&tfv1alpha1.Stack{}).
 		Complete(r)
+}
+
+// reconcileDelete handles Stack delete
+func (r *StackReconciler)reconcileDelete(ctx context.Context, stack tfv1alpha1.Stack) (ctrl.Result, error) {
+    return ctrl.Result{}, nil
+}
+
+// reconcileUpdate handles stack creation and updates
+func (r *StackReconciler)reconcileUpdate(ctx context.Context, stack tfv1alpha1.Stack) (ctrl.Result, error) {
+   jobCfg := &jobs.JobConfig{
+        Command:    "apply",
+        Namespace:  stack.Namespace,
+        Stack:      stack.Name,
+        TfConfig:   stack.Spec.TfConfig.Name,
+        Tfvars:     stack.Spec.TfVars.Name,
+        Tfstate:    stack.Status.TfState.Name,
+    }
+
+    job, err := jobs.BuildJob(jobCfg)
+    if err != nil {
+        return ctrl.Result{}, err
+    }
+
+    err = r.Create(ctx, job)
+    if err != nil {
+        return ctrl.Result{}, err
+    }
+
+    return ctrl.Result{}, nil
 }

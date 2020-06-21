@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	tfo "github.com/pablochacin/tf-operator/api/v1alpha1"
+    batchv1 "k8s.io/api/batch/v1"
     corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
     rmt "k8s.io/apimachinery/pkg/runtime"
@@ -74,7 +75,6 @@ func createTfvarsSecret(name string, ns string, content string) *corev1.Secret {
     }
 }
 
-
 var _ = Describe("Controller", func() {
 	var (
         stack      *tfo.Stack
@@ -127,6 +127,8 @@ var _ = Describe("Controller", func() {
             It("Should not Return an error", func() {
                 Expect(err).NotTo(HaveOccurred())
                 Expect(result).NotTo(BeNil())
+                jobs := &batchv1.JobList{}
+                Expect(jobs.Size()).To(Equal(int(1)))
             })
         })
     })
